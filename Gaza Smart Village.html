@@ -1,0 +1,818 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1"><style>:root{color-scheme:light}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Gaza Smart Village</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#EEF2F1;      /* pale site-survey paper */
+  --paper-2:#DFE6E5;
+  --ink:#14233A;        /* deep navy */
+  --ink-soft:#4B5A6B;
+  --route:#1F8A5B;      /* campus green */
+  --olive:#2E5A8C;      /* slate blue, secondary */
+  --sun:#E8B530;        /* marker yellow */
+  --line:#C6D0CF;
+  --display:"Bricolage Grotesque", system-ui, sans-serif;
+  --body:"IBM Plex Sans", system-ui, sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{
+  background:var(--paper);
+  color:var(--ink);
+  font-family:var(--body);
+  font-size:clamp(15px,1.15vw,18px);
+  line-height:1.5;
+  overflow:hidden;
+}
+/* topographic contour backdrop */
+.topo{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.55}
+.deck{position:relative;z-index:1;height:100dvh;display:flex;flex-direction:column}
+.bar{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:14px clamp(16px,4vw,56px);font-size:.85em;color:var(--ink-soft)
+}
+.brand{font-family:var(--display);font-weight:800;color:var(--ink);font-size:1.15em;letter-spacing:-.01em}
+.brand span{color:var(--route)}
+.section-name{font-weight:500}
+
+.stage{position:relative;flex:1;min-height:0;overflow:hidden}
+.slide{
+  position:absolute;inset:0;
+  padding:clamp(12px,3vh,40px) clamp(16px,5vw,80px) 24px;
+  overflow-y:auto;
+  opacity:0;visibility:hidden;transform:translateX(24px);
+  transition:opacity .45s ease,transform .45s ease,visibility 0s linear .45s;
+  display:flex;flex-direction:column;justify-content:center;
+}
+.slide.back{transform:translateX(-24px)}
+.slide.active{opacity:1;visibility:visible;transform:none;transition:opacity .45s ease,transform .45s ease}
+.inner{width:100%;max-width:1180px;margin:0 auto}
+
+h1,h2,h3{font-family:var(--display);letter-spacing:-.02em;line-height:1.05}
+h1{font-size:clamp(3rem,9vw,8.5rem);font-weight:800}
+h2{font-size:clamp(1.9rem,3.8vw,3.4rem);font-weight:800;margin-bottom:.5em;max-width:22ch}
+h3{font-size:1.2em;font-weight:600;margin-bottom:.35em}
+p{max-width:68ch}
+.lede{font-size:1.25em;color:var(--ink-soft);max-width:52ch;margin-bottom:1.2em}
+.muted{color:var(--ink-soft)}
+strong{font-weight:600}
+
+.grid{display:grid;gap:clamp(14px,2vw,28px)}
+.g2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.g3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.g4{grid-template-columns:repeat(4,minmax(0,1fr))}
+
+/* Title slide */
+.title-slide h1 .num{color:var(--route)}
+.title-slide .tag{font-family:var(--display);font-size:clamp(1.3rem,2.4vw,2.1rem);font-weight:600;margin:.3em 0 .8em;max-width:24ch}
+.title-slide .motto{font-size:1.15em;color:var(--ink-soft);max-width:44ch}
+.facts{display:flex;flex-wrap:wrap;gap:8px 28px;margin-top:2.2em;padding-top:1.2em;border-top:2px solid var(--ink)}
+.facts div{font-size:.95em}
+.facts b{font-family:var(--display);font-size:1.9em;display:block;line-height:1;font-weight:800}
+
+/* Plain text blocks with a left rule */
+.block{border-left:3px solid var(--route);padding:.2em 0 .2em 1em}
+.block.olive{border-color:var(--olive)}
+.block.sun{border-color:var(--sun)}
+.block p{font-size:.97em}
+
+/* tick lists */
+ul.ticks{list-style:none;display:grid;gap:.45em}
+ul.ticks li{padding-left:1.4em;position:relative}
+ul.ticks li::before{content:"";position:absolute;left:0;top:.62em;width:.6em;height:.6em;border-radius:50%;border:2px solid var(--route)}
+ul.cols{grid-template-columns:repeat(2,minmax(0,1fr));column-gap:2.5em}
+
+/* chip clouds */
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chips span{border:1.5px solid var(--ink);border-radius:999px;padding:.25em .85em;font-size:.9em;background:var(--paper)}
+
+/* route path (sequences) */
+.path{display:flex;flex-wrap:wrap;align-items:center;gap:0;margin:1em 0}
+.path .stop{
+  display:flex;align-items:center;gap:.5em;font-weight:500;
+  background:var(--paper);padding:.35em .2em;
+}
+.path .stop::before{content:"";width:14px;height:14px;border-radius:50%;background:var(--paper);border:3px solid var(--route);flex:none}
+.path .stop.end::before{background:var(--route)}
+.path .seg{width:clamp(14px,2.4vw,40px);height:3px;background:var(--route);margin:0 .4em;background-image:repeating-linear-gradient(90deg,var(--route) 0 6px,transparent 6px 10px);background-color:transparent}
+.path.big .stop{font-family:var(--display);font-size:1.3em;font-weight:600}
+
+/* vertical path */
+.vpath{list-style:none;position:relative;padding-left:1.8em}
+.vpath::before{content:"";position:absolute;left:6px;top:.7em;bottom:.7em;width:3px;background:repeating-linear-gradient(180deg,var(--route) 0 6px,transparent 6px 10px)}
+.vpath li{position:relative;padding:.35em 0}
+.vpath li::before{content:"";position:absolute;left:-1.8em;top:.75em;width:15px;height:15px;border-radius:50%;background:var(--paper);border:3px solid var(--route)}
+.vpath li:last-child::before{background:var(--route)}
+
+/* formula */
+.formula{font-family:var(--display);font-weight:600;font-size:clamp(1.15rem,2vw,1.6rem);line-height:1.35;padding:.8em 1em;background:var(--ink);color:var(--paper);border-radius:6px;max-width:none}
+.formula em{font-style:normal;color:var(--sun)}
+
+/* big numbers where genuinely the content */
+.stat b{font-family:var(--display);font-weight:800;font-size:clamp(2.6rem,5vw,4.4rem);line-height:1;display:block;color:var(--route)}
+.stat.olive b{color:var(--olive)}
+.stat span{font-weight:500}
+
+/* roles */
+.role{background:#fff;border:1.5px solid var(--line);border-radius:10px;padding:1.2em}
+.role h3{display:flex;align-items:center;gap:.5em}
+.pin{width:12px;height:12px;border-radius:50%;background:var(--route);flex:none}
+.role:nth-child(2) .pin{background:var(--olive)}
+.role:nth-child(3) .pin{background:var(--sun)}
+
+.question{margin-top:1.6em;display:flex;flex-wrap:wrap;gap:.6em 1.6em;align-items:baseline}
+.question s{color:var(--ink-soft);text-decoration-thickness:2px}
+.question b{font-family:var(--display);font-size:1.5em}
+
+/* curriculum bars */
+.curr{display:grid;gap:10px}
+.curr .row{display:grid;grid-template-columns:minmax(150px,1.1fr) 2fr 40px;align-items:center;gap:14px}
+.curr .track{height:22px;background:var(--paper-2);border-radius:4px;overflow:hidden}
+.curr .fill{height:100%;background:var(--route);border-radius:4px}
+.curr .fill.ag{background:var(--olive)}
+.curr .fill.sp{background:var(--sun)}
+.curr .h{font-family:var(--display);font-weight:800;text-align:right}
+.curr .total{border-top:2px solid var(--ink);padding-top:10px;font-weight:600}
+.legend{display:flex;gap:18px;flex-wrap:wrap;font-size:.85em;color:var(--ink-soft);margin-top:12px}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+
+/* timeline */
+.timeline{display:grid;grid-template-columns:repeat(12,1fr);gap:4px;margin-bottom:18px}
+.timeline div{text-align:center;font-size:.75em;color:var(--ink-soft)}
+.phases{display:grid;grid-template-columns:2fr 2fr 6fr 2fr;gap:4px}
+.phase{padding:.9em;border-radius:6px;background:#fff;border-top:5px solid var(--route);font-size:.9em}
+.phase:nth-child(2){border-color:var(--olive)}
+.phase:nth-child(3){border-color:var(--sun)}
+.phase:nth-child(4){border-color:var(--ink)}
+.phase h3{font-size:1.05em}
+.phase .wk{font-size:.85em;color:var(--ink-soft);display:block;margin-bottom:.4em}
+
+/* tables */
+table{width:100%;border-collapse:collapse;font-size:.95em}
+th,td{text-align:left;padding:.5em .6em;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-family:var(--display);font-weight:600;border-bottom:2px solid var(--ink)}
+td.n{font-family:var(--display);font-weight:800;text-align:right;white-space:nowrap}
+
+/* CTA list for demo day */
+.ctas{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;margin-top:1.4em}
+.ctas div{background:var(--ink);color:var(--paper);border-radius:8px;padding:1.1em .9em;font-family:var(--display);font-weight:600;font-size:1.15em;line-height:1.15;min-height:5.2em;display:flex;align-items:flex-end}
+.ctas div:nth-child(odd){background:var(--route)}
+
+.statement{font-family:var(--display);font-size:clamp(1.3rem,2.4vw,2.1rem);font-weight:600;line-height:1.25;max-width:34ch}
+.closing h2{max-width:none;font-size:clamp(1.8rem,4.2vw,3.8rem)}
+
+.stages{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:0;margin-top:1em;position:relative}
+.stages::before{content:"";position:absolute;left:8%;right:8%;top:14px;height:3px;background:repeating-linear-gradient(90deg,var(--route) 0 6px,transparent 6px 10px)}
+.stages div{position:relative;padding:40px 10px 0;text-align:center}
+.stages div::before{content:"";position:absolute;left:50%;top:6px;transform:translateX(-50%);width:19px;height:19px;border-radius:50%;background:var(--paper);border:3px solid var(--route)}
+.stages div:last-child::before{background:var(--route)}
+.stages b{font-family:var(--display);font-size:1.15em;display:block;line-height:1.1;margin-bottom:.4em}
+.stages span{font-size:.85em;color:var(--ink-soft)}
+
+/* nav */
+.nav{
+  display:flex;align-items:center;gap:clamp(10px,2vw,24px);
+  padding:12px clamp(16px,4vw,56px) 18px;
+}
+.btn{
+  font:inherit;font-weight:600;border:2px solid var(--ink);background:var(--paper);color:var(--ink);
+  border-radius:999px;padding:.55em 1.2em;cursor:pointer;display:flex;align-items:center;gap:.45em;flex:none;
+  transition:background .15s,color .15s;
+}
+.btn:hover:not(:disabled){background:var(--ink);color:var(--paper)}
+.btn.primary{background:var(--route);border-color:var(--route);color:#fff}
+.btn.primary:hover:not(:disabled){background:var(--ink);border-color:var(--ink)}
+.btn:disabled{opacity:.35;cursor:default}
+.btn:focus-visible,.dot:focus-visible{outline:3px solid var(--sun);outline-offset:3px}
+.btn svg{width:18px;height:18px}
+
+.route{flex:1;position:relative;height:28px;display:flex;align-items:center;justify-content:space-between;min-width:0}
+.route::before{content:"";position:absolute;left:0;right:0;top:50%;height:3px;transform:translateY(-50%);background:repeating-linear-gradient(90deg,var(--line) 0 6px,transparent 6px 10px)}
+.route .done{position:absolute;left:0;top:50%;height:3px;transform:translateY(-50%);background:var(--route);transition:width .45s ease}
+.dot{position:relative;width:12px;height:12px;border-radius:50%;background:var(--paper);border:2px solid var(--line);cursor:pointer;padding:0;flex:none;transition:transform .2s,border-color .2s,background .2s}
+.dot.passed{border-color:var(--route);background:var(--route)}
+.dot.current{border-color:var(--route);background:var(--sun);transform:scale(1.6)}
+.count{font-family:var(--display);font-weight:600;min-width:4.2em;text-align:center;flex:none}
+
+@media (max-width:900px){
+  .g3,.g4{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .ctas{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .phases{grid-template-columns:1fr 1fr}
+  .timeline{display:none}
+  .stages{grid-template-columns:repeat(3,1fr);row-gap:20px}
+  .stages::before{display:none}
+}
+@media (max-width:640px){
+  body{font-size:15px}
+  .g2,.g3,.g4,ul.cols{grid-template-columns:1fr}
+  .slide{justify-content:flex-start}
+  .curr .row{grid-template-columns:1fr 36px;row-gap:4px}
+  .curr .row .label{grid-column:1/-1}
+  .route .dot{width:0;height:0;border:0;opacity:0;pointer-events:none}
+  .route::before{background:var(--line)}
+  .phases{grid-template-columns:1fr}
+  .btn .t{display:none}
+  .btn{padding:.6em .8em}
+  .section-name{display:none}
+  .stages{grid-template-columns:repeat(2,1fr)}
+  .path .seg{width:10px}
+}
+@media (prefers-reduced-motion:reduce){
+  .slide,.slide.active,.route .done,.dot{transition:none}
+}
+
+.note{font-size:.85em;color:var(--ink-soft);border-left:3px solid var(--sun);padding-left:.8em;margin-top:1.2em;max-width:70ch}
+.flag{display:inline-block;margin-left:.5em;font-size:.72em;font-weight:600;color:var(--ink);background:#F6E3A8;border-radius:4px;padding:.05em .45em;vertical-align:1px}
+.pull{font-family:var(--display);font-size:1.3em;font-weight:600;line-height:1.3;border-left:4px solid var(--route);padding:.2em 0 .2em 1em;max-width:34ch}
+.stat.alt b{color:var(--olive)}
+.stat b{white-space:nowrap}
+.site-stats .stat b{font-size:clamp(1.8rem,3.2vw,2.9rem)}
+.stat b small{font-size:.45em;font-weight:600}
+.stat b{font-size:clamp(2rem,4vw,3.6rem)}
+.phases3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.phases3 .phase{font-size:.95em;padding:1.1em}
+.phases3 .phase:nth-child(1){border-color:var(--route)}
+.phases3 .phase:nth-child(2){border-color:var(--olive)}
+.phases3 .phase:nth-child(3){border-color:var(--ink)}
+.phase .fund{margin-top:.8em;padding-top:.7em;border-top:1px dashed var(--line);color:var(--ink-soft);font-size:.92em}
+.phases.acc{grid-template-columns:3fr 3fr 3fr 2fr 1.4fr}
+.phases.acc .phase:nth-child(5){border-color:var(--route);background:var(--ink);color:var(--paper)}
+.phases.acc .phase:nth-child(5) .wk{color:#B9C4D0}
+.curr .fill.alt{background:var(--olive)}
+.curr.scale .row{grid-template-columns:minmax(120px,1fr) 2fr 52px}
+.eq,.impact{border-top:2px solid var(--ink)}
+.eqrow{display:flex;justify-content:space-between;align-items:baseline;gap:1em;padding:.55em 0;border-bottom:1px solid var(--line)}
+.eqrow b{font-family:var(--display);font-weight:800;font-size:1.35em;white-space:nowrap}
+.eqrow.sum{border-bottom:2px solid var(--ink)}
+.eqrow.sum span{font-weight:600}
+.eqrow.ebit b{color:var(--route);font-size:2em}
+.capex{display:grid;gap:6px;margin-top:.6em;font-size:.88em}
+.capex .row{display:grid;grid-template-columns:minmax(150px,1.3fr) 1.4fr 50px;gap:10px;align-items:center}
+.capex .track{height:12px;background:var(--paper-2);border-radius:3px;overflow:hidden}
+.capex .fill{height:100%;background:var(--route)}
+.capex b{font-family:var(--display);text-align:right}
+table.compact{font-size:.86em}
+table.compact td{padding:.38em .5em}
+.vpath.gates li{padding:.3em 0 1em}
+.vpath.gates li span{display:block;color:var(--ink-soft);font-size:.92em;margin-top:.2em}
+ol.steps{padding-left:1.4em;display:grid;gap:.35em;font-size:.95em}
+ol.steps li::marker{font-family:var(--display);font-weight:800;color:var(--route)}
+.stages.s5{grid-template-columns:repeat(5,minmax(0,1fr))}
+.siteplan{margin:0}
+.siteplan svg{width:100%;max-height:62vh;display:block}
+.siteplan figcaption{font-size:.8em;margin-top:.4em}
+@media (max-width:900px){
+  .phases3{grid-template-columns:1fr}
+  .phases.acc{grid-template-columns:1fr 1fr}
+  .stages.s5{grid-template-columns:repeat(2,1fr)}
+}
+@media (max-width:640px){
+  .phases.acc{grid-template-columns:1fr}
+  .capex .row{grid-template-columns:1fr 50px}
+  .capex .track{display:none}
+  .siteplan svg{max-height:48vh}
+}
+</style>
+</head>
+<body>
+
+<svg class="topo" aria-hidden="true" viewBox="0 0 1200 800" preserveAspectRatio="xMidYMid slice">
+  <g fill="none" stroke="#C6D0CF" stroke-width="1.2">
+    <path d="M880 -20 C 1000 80, 1180 60, 1240 180"/>
+    <path d="M820 -20 C 960 120, 1160 110, 1240 250"/>
+    <path d="M760 -20 C 900 170, 1140 170, 1240 330"/>
+    <path d="M700 -20 C 850 220, 1120 240, 1240 420"/>
+    <path d="M-40 620 C 120 560, 280 640, 420 820"/>
+    <path d="M-40 680 C 90 630, 230 690, 340 820"/>
+    <path d="M-40 540 C 160 480, 340 590, 500 820"/>
+    <ellipse cx="1040" cy="640" rx="120" ry="70"/>
+    <ellipse cx="1040" cy="640" rx="80" ry="44"/>
+    <ellipse cx="1040" cy="640" rx="38" ry="20"/>
+  </g>
+</svg>
+
+<div class="deck">
+  <header class="bar">
+    <div class="brand">Gaza Smart<span> Village</span></div>
+    <div class="section-name" id="sectionName" aria-live="polite"></div>
+  </header>
+
+  <main class="stage" id="stage">
+    <!-- 1 Cover -->
+    <section class="slide title-slide" data-section="Investor presentation">
+      <div class="inner">
+        <h1 style="font-size:clamp(2.8rem,7.5vw,7rem)">Gaza Smart <span class="num">Village</span></h1>
+        <p class="tag">A phased education-to-employment platform</p>
+        <p class="motto">Learn, build, work and get hired, on a campus built to make that journey possible. Prepared for TAQAT. Five-year planning horizon.</p>
+        <div class="facts">
+          <div><b>200</b>students in Phase I</div>
+          <div><b>1,500</b>academy students at full capacity</div>
+          <div><b>1,200</b>residential beds</div>
+          <div><b>~30</b>dunums of long-term site</div>
+          <div><b>3</b>stage-gated phases</div>
+        </div>
+        <p class="note">Preliminary concept and feasibility assumptions, for discussion and due diligence.</p>
+      </div>
+    </section>
+
+    <!-- 2 Opportunity -->
+    <section class="slide" data-section="The opportunity">
+      <div class="inner grid g2" style="align-items:center">
+        <div>
+          <h2>Training alone does not get young people hired</h2>
+          <p class="lede">Young people in Gaza need market-aligned technical education that ends in real work. And the environment around them makes sustained learning hard.</p>
+          <blockquote class="pull">Training is not the final product. Employment, income, university readiness and economic participation are the outcomes.</blockquote>
+        </div>
+        <div>
+          <h3>Barriers the village removes</h3>
+          <ul class="ticks">
+            <li>Transportation difficulties</li>
+            <li>Unreliable electricity</li>
+            <li>Unreliable internet access</li>
+            <li>Few professional learning environments</li>
+            <li>Weak links between education and employers</li>
+          </ul>
+          <h3 style="margin-top:1.4em">Five layers, one ecosystem</h3>
+          <div class="chips"><span>Education</span><span>Applied learning</span><span>Infrastructure</span><span>Market access</span><span>Employment &amp; entrepreneurship</span></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3 Vision -->
+    <section class="slide" data-section="Vision">
+      <div class="inner">
+        <h2>Gaza's leading education-to-employment ecosystem</h2>
+        <p class="lede">Preparing young people for the global economy through practical education, technology, reliable infrastructure, real projects, entrepreneurship and direct pathways to work.</p>
+        <h3 style="margin-top:1em">The core promise</h3>
+        <div class="path big">
+          <span class="stop">Learn</span><span class="seg"></span>
+          <span class="stop">Practice</span><span class="seg"></span>
+          <span class="stop">Build</span><span class="seg"></span>
+          <span class="stop">Work</span><span class="seg"></span>
+          <span class="stop end">Get hired</span>
+        </div>
+        <div class="block" style="margin-top:1.4em">
+          <h3>Mission</h3>
+          <p>Give young people the skills, environment, infrastructure, mentoring, work experience and market access to become globally competitive professionals and entrepreneurs.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4 Site -->
+    <section class="slide" data-section="Site and existing asset">
+      <div class="inner grid g2" style="align-items:center">
+        <div>
+          <h2>An existing building on a site with room to grow</h2>
+          <div class="grid g2 site-stats" style="margin:1em 0 1.4em">
+            <div class="stat"><b>30,000<small> m²</small></b><span>long-term site, about 30 dunums</span></div>
+            <div class="stat alt"><b>~3,700<small> m²</small></b><span>built-up area over three floors</span></div>
+          </div>
+          <p class="muted">The existing building (about 25 × 50 m) houses training, AI and software labs, coworking, career services, employer engagement, events and administration. Student housing is planned separately in Phase II.</p>
+        </div>
+        <figure class="siteplan">
+          <svg viewBox="0 0 300 420" role="img" aria-label="Site plan: 140 by 215 metre site, existing building on the left near the street, Phase I lease area of about 3 dunums around it, Phase II expansion across the rest">
+            <rect x="10" y="10" width="280" height="370" rx="4" fill="var(--paper-2)" stroke="var(--ink)" stroke-width="2"/>
+            <rect x="14" y="250" width="120" height="126" rx="3" fill="none" stroke="var(--route)" stroke-width="2.5" stroke-dasharray="6 4"/>
+            <rect x="34" y="276" width="50" height="94" rx="2" fill="var(--ink)"/>
+            <text x="59" y="326" fill="var(--paper)" font-size="10" text-anchor="middle" font-family="var(--body)" transform="rotate(-90 59 326)">Existing building</text>
+            <text x="120" y="268" fill="var(--route)" font-size="11" text-anchor="end" font-weight="600" font-family="var(--body)">Phase I</text>
+            <text x="80" y="45" fill="var(--olive)" font-size="11" font-weight="600" text-anchor="middle" font-family="var(--body)">Phase II campus</text>
+            <rect x="150" y="62" width="34" height="22" rx="3" fill="var(--paper)" stroke="var(--olive)" stroke-width="1.2"/><rect x="190" y="62" width="34" height="22" rx="3" fill="var(--paper)" stroke="var(--olive)" stroke-width="1.2"/><rect x="230" y="62" width="34" height="22" rx="3" fill="var(--paper)" stroke="var(--olive)" stroke-width="1.2"/><rect x="150" y="92" width="34" height="22" rx="3" fill="var(--paper)" stroke="var(--olive)" stroke-width="1.2"/><rect x="190" y="92" width="34" height="22" rx="3" fill="var(--paper)" stroke="var(--olive)" stroke-width="1.2"/><rect x="230" y="92" width="34" height="22" rx="3" fill="var(--paper)" stroke="var(--olive)" stroke-width="1.2"/><rect x="150" y="122" width="34" height="22" rx="3" fill="var(--paper)" stroke="var(--olive)" stroke-width="1.2"/><rect x="190" y="122" width="34" height="22" rx="3" fill="var(--paper)" stroke="var(--olive)" stroke-width="1.2"/><rect x="230" y="122" width="34" height="22" rx="3" fill="var(--paper)" stroke="var(--olive)" stroke-width="1.2"/><rect x="150" y="152" width="34" height="22" rx="3" fill="var(--paper)" stroke="var(--olive)" stroke-width="1.2"/><rect x="190" y="152" width="34" height="22" rx="3" fill="var(--paper)" stroke="var(--olive)" stroke-width="1.2"/><rect x="230" y="152" width="34" height="22" rx="3" fill="var(--paper)" stroke="var(--olive)" stroke-width="1.2"/><rect x="150" y="182" width="34" height="22" rx="3" fill="var(--paper)" stroke="var(--olive)" stroke-width="1.2"/><rect x="190" y="182" width="34" height="22" rx="3" fill="var(--paper)" stroke="var(--olive)" stroke-width="1.2"/><rect x="230" y="182" width="34" height="22" rx="3" fill="var(--paper)" stroke="var(--olive)" stroke-width="1.2"/>
+            <text x="205" y="222" fill="var(--ink-soft)" font-size="10" text-anchor="middle" font-family="var(--body)">Residential clusters</text>
+            <rect x="30" y="62" width="95" height="60" rx="3" fill="#CFE3D8" stroke="var(--route)" stroke-width="1"/>
+            <text x="77" y="96" fill="var(--route)" font-size="10" text-anchor="middle" font-family="var(--body)">Green &amp; sports</text>
+            <rect x="30" y="140" width="95" height="44" rx="3" fill="var(--paper)" stroke="var(--olive)" stroke-width="1.2"/>
+            <text x="77" y="166" fill="var(--olive)" font-size="10" text-anchor="middle" font-family="var(--body)">Cafeteria</text>
+            <rect x="150" y="262" width="126" height="60" rx="3" fill="#CFE3D8" stroke="var(--route)" stroke-width="1"/>
+            <text x="213" y="296" fill="var(--route)" font-size="10" text-anchor="middle" font-family="var(--body)">Solar &amp; open space</text>
+            <line x1="10" y1="400" x2="290" y2="400" stroke="var(--ink)" stroke-width="3"/>
+            <text x="150" y="416" fill="var(--ink)" font-size="11" text-anchor="middle" font-family="var(--body)">Street · ~140 m frontage</text>
+            <text x="-195" y="6" fill="var(--ink-soft)" font-size="10" text-anchor="middle" font-family="var(--body)" transform="rotate(-90)">~215 m depth</text>
+          </svg>
+          <figcaption class="muted">Schematic only, not to scale.</figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <!-- 5 Three phases -->
+    <section class="slide" data-section="Three-phase strategy">
+      <div class="inner">
+        <h2>Three phases, each unlocked by the one before</h2>
+        <p class="lede">The village is not built all at once. Each phase opens only after it meets operational, regulatory, financial and market milestones.</p>
+        <div class="phases3">
+          <div class="phase"><span class="wk">Phase I · Validation</span><h3>Academy launch</h3><p>Lease the existing building and about 3 dunums. Launch with 200 students, prove the model, obtain licenses.</p></div>
+          <div class="phase"><span class="wk">Phase II · Scale</span><h3>Residential smart campus</h3><p>Expand to the full ~30-dunum site, add student housing and services, grow toward 1,500 students.</p></div>
+          <div class="phase"><span class="wk">Phase III · Vertical integration</span><h3>International school</h3><p>An English-medium secondary school that feeds the academy and prepares students for university.</p></div>
+        </div>
+        <h3 style="margin-top:1.6em">Why stage-gated</h3>
+        <div class="chips"><span>Lower upfront risk</span><span>Demand validated first</span><span>Real operating data</span><span>Stronger investor confidence</span><span>Capital raised progressively</span><span>No overbuilding</span><span>Curriculum refined before scale</span></div>
+      </div>
+    </section>
+
+    <!-- 6 Phase I -->
+    <section class="slide" data-section="Phase I · Academy launch">
+      <div class="inner grid g2">
+        <div>
+          <h2>Phase I: a 200-student employment academy</h2>
+          <p class="lede">An employment academy, not a traditional training center. No housing yet, just the existing building and about 3 dunums around it.</p>
+          <h3>Technical pathways, driven by employer demand</h3>
+          <div class="chips" style="margin-bottom:1.2em">
+            <span>Software engineering</span><span>Artificial intelligence</span><span>Data science</span><span>Cybersecurity</span><span>UI/UX</span><span>Digital marketing</span><span>Multimedia</span><span>DevOps &amp; cloud</span><span>AI agents &amp; automation</span><span>Entrepreneurship</span>
+          </div>
+          <p class="muted">Every track adds English for work, communication, freelancing, AI tools, project management, portfolio building and interview preparation.</p>
+        </div>
+        <div>
+          <h3>Phase I is validated when it shows</h3>
+          <ul class="ticks">
+            <li>200 enrolled students, or an agreed minimum</li>
+            <li>Required operating licenses</li>
+            <li>Strong attendance and completion</li>
+            <li>Employer partnerships and placements</li>
+            <li>Willingness to pay, or sponsors willing to fund</li>
+            <li>A validated cost per student and cost of acquisition</li>
+            <li>A pipeline strong enough to justify expansion</li>
+          </ul>
+          <p class="note" style="margin-top:1.2em">The licensing authority, accreditation, fees and timelines must be formally verified before any public claim of accreditation.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 7 Phase II -->
+    <section class="slide" data-section="Phase II · Residential campus">
+      <div class="inner grid g2">
+        <div>
+          <h2>Phase II: a residential campus for 1,500 students</h2>
+          <div class="grid g3" style="margin:.6em 0 1.2em">
+            <div class="stat"><b>300</b><span>units of ~30 m²</span></div>
+            <div class="stat"><b>4</b><span>residents per unit</span></div>
+            <div class="stat alt"><b>1,200</b><span>maximum beds</span></div>
+          </div>
+          <p>Separate male and female student villages, laid out as landscaped clusters. Each unit has a living area, bathroom, kitchenette, power, internet and cooling.</p>
+          <h3 style="margin-top:1em">Campus services</h3>
+          <div class="chips"><span>Cafeteria &amp; kitchen</span><span>Sports courts</span><span>Green spaces</span><span>Outdoor study</span><span>Musalla</span><span>Solar &amp; backup power</span><span>High-speed internet</span><span>Controlled access</span></div>
+        </div>
+        <div>
+          <h3>Enrollment grows in steps, housing in tranches</h3>
+          <div class="curr scale" style="margin-top:.6em">
+            <div class="row"><span class="label">Phase I launch</span><div class="track"><div class="fill" style="width:13.3%"></div></div><span class="h">200</span></div>
+            <div class="row"><span class="label">Early Phase II</span><div class="track"><div class="fill" style="width:33.3%"></div></div><span class="h">500</span></div>
+            <div class="row"><span class="label">Phase II growth</span><div class="track"><div class="fill" style="width:60%"></div></div><span class="h">900</span></div>
+            <div class="row"><span class="label">Phase II expansion</span><div class="track"><div class="fill" style="width:80%"></div></div><span class="h">1,200</span></div>
+            <div class="row"><span class="label">Full capacity</span><div class="track"><div class="fill alt" style="width:100%"></div></div><span class="h">1,500</span></div>
+          </div>
+          <p class="note" style="margin-top:1em">Illustrative scale path. Housing is built only as demand is proven.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 8 Accelerator -->
+    <section class="slide" data-section="12-month employment accelerator">
+      <div class="inner">
+        <h2>Twelve months that end in a job, not a certificate</h2>
+        <div class="timeline" aria-hidden="true">
+          <div>M1</div><div>M2</div><div>M3</div><div>M4</div><div>M5</div><div>M6</div><div>M7</div><div>M8</div><div>M9</div><div>M10</div><div>M11</div><div>M12</div>
+        </div>
+        <div class="phases acc">
+          <div class="phase"><span class="wk">Months 1–3</span><h3>Foundation</h3><p>Technical basics, AI tools, English, communication, professional skills.</p></div>
+          <div class="phase"><span class="wk">Months 4–6</span><h3>Specialization</h3><p>Intensive track work, applied assignments, portfolio.</p></div>
+          <div class="phase"><span class="wk">Months 7–9</span><h3>Real projects</h3><p>Client briefs, team projects, employer challenges.</p></div>
+          <div class="phase"><span class="wk">Months 10–11</span><h3>Work experience</h3><p>Internships, freelancing, staff augmentation, mentorship.</p></div>
+          <div class="phase"><span class="wk">Month 12</span><h3>Transition</h3><p>Hiring, remote jobs, contracts, startups.</p></div>
+        </div>
+        <p class="statement" style="margin-top:1.4em">The primary KPI is employment and income, not course completion.</p>
+      </div>
+    </section>
+
+    <!-- 9 Phase III -->
+    <section class="slide" data-section="Phase III · International school">
+      <div class="inner grid g2">
+        <div>
+          <h2>Phase III: Gaza International School</h2>
+          <p class="lede">A private, English-medium secondary school that extends the talent pipeline upstream, combining university preparation with technology, AI, entrepreneurship and project-based learning.</p>
+          <h3>Curricula to evaluate</h3>
+          <div class="chips"><span>Cambridge International</span><span>British</span><span>International Baccalaureate</span><span>American</span></div>
+          <p class="note" style="margin-top:1.2em">No curriculum is chosen before regulatory, accreditation, cost, teacher-availability, university-recognition and demand reviews. The school gets its own business case; no school revenue is in the core forecast.</p>
+        </div>
+        <div>
+          <h3>A graduate leaves with</h3>
+          <ul class="ticks cols">
+            <li>Strong English</li><li>Academic readiness</li><li>Digital fluency</li><li>AI literacy</li><li>Critical thinking</li><li>Communication skills</li><li>Real project experience</li><li>A portfolio</li><li>Entrepreneurship exposure</li><li>A clear university or career direction</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- 10 Pipeline -->
+    <section class="slide" data-section="Integrated talent pipeline">
+      <div class="inner">
+        <h2>One continuous pipeline from school to income</h2>
+        <p class="lede">At maturity, each stage feeds the next. This integration is the project's strategic differentiator.</p>
+        <div class="stages s5">
+          <div><b>Gaza International School</b><span>English-medium, university-ready</span></div>
+          <div><b>Smart Village Academy</b><span>12-month employment pathway</span></div>
+          <div><b>Labs &amp; real projects</b><span>Client work and team delivery</span></div>
+          <div><b>Market access</b><span>BrightGaza, employer network, corporate partners</span></div>
+          <div><b>Income</b><span>Employment, freelancing, startups, university</span></div>
+        </div>
+        <p class="muted" style="margin-top:2em;max-width:80ch">The advantage is the combination: physical infrastructure, technical education, housing, reliable utilities, real projects, an employer network, a digital talent platform and employment services. TAQAT already brings training experience, coworking operations, employer relationships, BrightGaza and staff augmentation.</p>
+      </div>
+    </section>
+
+    <!-- 11 Business model -->
+    <section class="slide" data-section="Business and revenue model">
+      <div class="inner grid g2">
+        <div>
+          <h2>Diversified revenue, blended payers</h2>
+          <div class="grid g2" style="margin:.6em 0 1.2em">
+            <div class="stat"><b>$3,000</b><span>academy value per student per year<span class="flag">Assumption</span></span></div>
+            <div class="stat alt"><b>$100</b><span>housing per resident per month<span class="flag">Assumption</span></span></div>
+          </div>
+          <h3>Who can pay the $3,000</h3>
+          <p>Not necessarily the student. A blended model reduces dependence on household income.</p>
+          <div class="chips" style="margin-top:.6em"><span>Students &amp; families</span><span>Employers</span><span>Corporate sponsors</span><span>NGOs</span><span>Foundations</span><span>Development agencies</span><span>Scholarship funds</span><span>Government programs</span></div>
+        </div>
+        <div>
+          <h3>Revenue streams</h3>
+          <table class="compact">
+            <tr><td><strong>Core, modeled</strong></td><td>Academy tuition and training fees; student accommodation</td></tr>
+            <tr><td><strong>Sponsorship</strong></td><td>Sponsored cohorts from foundations, NGOs, agencies, corporates</td></tr>
+            <tr><td><strong>Services</strong></td><td>Corporate training; coworking; recruitment and staff augmentation; outsourcing and digital projects</td></tr>
+            <tr><td><strong>Platform</strong></td><td>BrightGaza commissions and service fees</td></tr>
+            <tr><td><strong>Ventures</strong></td><td>Incubation programs, possible future equity</td></tr>
+            <tr><td><strong>Campus</strong></td><td>Cafeteria, concessions, events, facility rental</td></tr>
+            <tr><td><strong>Phase III</strong></td><td>International school tuition, after its own business case</td></tr>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- 12 Full campus economics -->
+    <section class="slide" data-section="Full-campus economics">
+      <div class="inner">
+        <h2>Full-campus reference case</h2>
+        <p class="lede" style="max-width:70ch">At full academy and residential capacity, using the earlier feasibility assumptions. A reference case, not a guaranteed return.</p>
+        <div class="grid g2" style="align-items:start">
+          <div>
+            <div class="eq">
+              <div class="eqrow"><span>Academy · 1,500 × $3,000</span><b>$4.50M</b></div>
+              <div class="eqrow"><span>Housing · 1,200 × $100 × 12</span><b>$1.44M</b></div>
+              <div class="eqrow sum"><span>Core revenue</span><b>$5.94M</b></div>
+              <div class="eqrow"><span>Operating costs · $100K/month</span><b>−$1.20M</b></div>
+              <div class="eqrow sum ebit"><span>Preliminary EBITDA</span><b>$4.74M</b></div>
+            </div>
+            <p class="note" style="margin-top:.8em">Excludes corporate training, recruitment, outsourcing, coworking, sponsorship and school revenue. EBITDA is before depreciation, financing, tax, replacements and partner revenue share.</p>
+          </div>
+          <div>
+            <h3>Operating-cost stress test</h3>
+            <table>
+              <tr><th>Scenario</th><th style="text-align:right">Annual costs</th><th style="text-align:right">EBITDA</th></tr>
+              <tr><td>Base · $100K/month</td><td class="n">$1.20M</td><td class="n">$4.74M</td></tr>
+              <tr><td>Conservative · $150K/month</td><td class="n">$1.80M</td><td class="n">$4.14M</td></tr>
+              <tr><td>Stress · $200K/month</td><td class="n">$2.40M</td><td class="n">$3.54M</td></tr>
+            </table>
+            <div class="block" style="margin-top:1.2em">
+              <h3>Break-even ≈ 303 students</h3>
+              <p>At $3,960 average revenue per student ($3,000 + 80% housing uptake × $1,200) against $1.2M costs. Planning range: 300–400 students.</p>
+            </div>
+            <p class="note" style="margin-top:.8em">The high margin is a warning: operating costs must be stress-tested.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 13 Phase I envelope + CAPEX -->
+    <section class="slide" data-section="Phase I envelope and CAPEX">
+      <div class="inner grid g2">
+        <div>
+          <h2>Phase I needs its own cost structure</h2>
+          <div class="stat" style="margin:.6em 0 1em"><b>$600K</b><span>maximum annual revenue at 200 students × $3,000, with no housing income</span></div>
+          <p>Phase I cannot inherit the full-campus break-even. Rent and operating costs must be designed inside this envelope, so the academy either breaks even in the pilot period or has a funded, time-limited validation subsidy.</p>
+          <h3 style="margin-top:1.2em">Still to be confirmed</h3>
+          <div class="chips"><span>Rent</span><span>Fit-out</span><span>IT &amp; furniture</span><span>Licensing fees</span><span>Staffing</span><span>Energy</span><span>Internet</span><span>Security</span><span>Acquisition cost</span><span>Scholarship share</span><span>Collection rate</span><span>Working capital</span></div>
+        </div>
+        <div>
+          <h3>Phase II development CAPEX reference: $1.0M</h3>
+          <div class="capex">
+            <div class="row"><span>Residential units &amp; infrastructure</span><div class="track"><div class="fill" style="width:100%"></div></div><b>$420K</b></div>
+            <div class="row"><span>Building renovation &amp; equipment</span><div class="track"><div class="fill" style="width:42.9%"></div></div><b>$180K</b></div>
+            <div class="row"><span>Solar &amp; backup energy</span><div class="track"><div class="fill" style="width:28.6%"></div></div><b>$120K</b></div>
+            <div class="row"><span>Digital infrastructure</span><div class="track"><div class="fill" style="width:11.9%"></div></div><b>$50K</b></div>
+            <div class="row"><span>Cafeteria &amp; kitchen</span><div class="track"><div class="fill" style="width:11.9%"></div></div><b>$50K</b></div>
+            <div class="row"><span>Sports facilities</span><div class="track"><div class="fill" style="width:10.7%"></div></div><b>$45K</b></div>
+            <div class="row"><span>Roads, walkways &amp; parking</span><div class="track"><div class="fill" style="width:9.5%"></div></div><b>$40K</b></div>
+            <div class="row"><span>Green &amp; outdoor areas</span><div class="track"><div class="fill" style="width:7.1%"></div></div><b>$30K</b></div>
+            <div class="row"><span>Water, sanitation &amp; utilities</span><div class="track"><div class="fill" style="width:6%"></div></div><b>$25K</b></div>
+            <div class="row"><span>Musalla &amp; community</span><div class="track"><div class="fill" style="width:3.6%"></div></div><b>$15K</b></div>
+            <div class="row"><span>Contingency</span><div class="track"><div class="fill" style="width:3.6%"></div></div><b>$15K</b></div>
+            <div class="row"><span>Security &amp; surveillance</span><div class="track"><div class="fill" style="width:2.4%"></div></div><b>$10K</b></div>
+          </div>
+          <p class="note" style="margin-top:.8em">Planning assumption, excluding land and building. Needs engineering design, BOQ and supplier quotes.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 14 Investment logic + funding -->
+    <section class="slide" data-section="Phased investment logic">
+      <div class="inner">
+        <h2>An expandable platform, financed phase by phase</h2>
+        <p class="lede">No single investor carries everything. Each phase has its own purpose and its own blended capital.</p>
+        <div class="phases3">
+          <div class="phase"><span class="wk">Phase I</span><h3>Invest in validation</h3><p>Licensing, the academy, 200 students, the employer pipeline, operating proof.</p><p class="fund">TAQAT, a founding partner, education sponsors, sponsored cohorts, corporate partners, limited catalytic grants.</p></div>
+          <div class="phase"><span class="wk">Phase II</span><h3>Invest in scale</h3><p>Residential village, energy, internet, campus services, 1,500-student capacity.</p><p class="fund">Strategic and impact investors, landowner partner, development finance, foundations, infrastructure, technology and energy partners.</p></div>
+          <div class="phase"><span class="wk">Phase III</span><h3>Invest in the long pipeline</h3><p>An international secondary school, university readiness, early technology and AI education.</p><p class="fund">Education investor, international school operator, academic partner, long-term institutional capital.</p></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 15 Impact -->
+    <section class="slide" data-section="Economic and social impact">
+      <div class="inner grid g2" style="align-items:center">
+        <div>
+          <h2>Measured by the income graduates earn</h2>
+          <div class="impact">
+            <div class="eqrow"><span>Graduating cohort at full capacity</span><b>1,500</b></div>
+            <div class="eqrow"><span>Entering income pathways at 70%</span><b>1,050</b></div>
+            <div class="eqrow"><span>At $600 per month each</span><b>$630K/mo</b></div>
+            <div class="eqrow sum ebit"><span>Annual graduate income, one cohort</span><b>$7.56M</b></div>
+          </div>
+          <p class="note" style="margin-top:.8em">Illustrative impact scenario, not a forecast.</p>
+        </div>
+        <div>
+          <h3>Impact KPIs</h3>
+          <ul class="ticks cols">
+            <li>Students enrolled</li><li>Completion rate</li><li>Employment rate</li><li>Students earning income</li><li>Average graduate income</li><li>Remote jobs secured</li><li>Freelance contracts</li><li>International employers</li><li>Real projects completed</li><li>Female participation</li><li>Startups launched</li><li>Employer retention</li><li>Income at 6 and 12 months</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- 16 Risks + gates -->
+    <section class="slide" data-section="Risks and stage gates">
+      <div class="inner grid g2">
+        <div>
+          <h2>Risk is managed by gates, not hope</h2>
+          <table class="compact">
+            <tr><th>Risk</th><th>Mitigation</th></tr>
+            <tr><td><strong>Enrollment below target</strong></td><td>Start at 200, validate before expanding</td></tr>
+            <tr><td><strong>Affordability</strong></td><td>Blended payers, scholarships, sponsored cohorts</td></tr>
+            <tr><td><strong>Licensing delays</strong></td><td>Start regulatory work in Phase I</td></tr>
+            <tr><td><strong>Security disruption</strong></td><td>Phased CAPEX, modular build, contingency</td></tr>
+            <tr><td><strong>Power &amp; internet</strong></td><td>Solar, batteries, backup, redundant links</td></tr>
+            <tr><td><strong>Construction inflation</strong></td><td>Phased procurement, BOQ validation</td></tr>
+            <tr><td><strong>Empty housing</strong></td><td>Build in tranches</td></tr>
+            <tr><td><strong>Weak placement</strong></td><td>Employer-led curriculum, career center, BrightGaza</td></tr>
+            <tr><td><strong>Higher costs</strong></td><td>Phase I data, $150K and $200K scenarios</td></tr>
+            <tr><td><strong>Grant dependence</strong></td><td>Tuition, housing, services, recruitment</td></tr>
+            <tr><td><strong>Partner conflict</strong></td><td>SPV, valuation, governance, exit clauses</td></tr>
+          </table>
+        </div>
+        <div>
+          <h3>Stage gates</h3>
+          <ol class="vpath gates">
+            <li><strong>Gate 1 · Launch Phase I</strong><span>Lease agreed, legal entity confirmed, fit-out funded, licensing path, recruitment and employer plans.</span></li>
+            <li><strong>Gate 2 · Approve Phase II</strong><span>Enrollment validated, licenses held, outcomes shown, long-term land deal, BOQ done, financing secured.</span></li>
+            <li><strong>Gate 3 · Approve Phase III</strong><span>Academy stable, school demand studied, curriculum and accreditation set, financing and operator confirmed.</span></li>
+          </ol>
+        </div>
+      </div>
+    </section>
+
+    <!-- 17 Partnership + next steps -->
+    <section class="slide" data-section="Partnership and next steps">
+      <div class="inner grid g2">
+        <div>
+          <h2>How partners can join</h2>
+          <div class="chips" style="margin-bottom:1.2em"><span>Long-term lease</span><span>Lease + revenue share</span><span>Joint venture</span><span>SPV</span><span>Land for equity</span><span>Build-operate-transfer</span><span>Separate SPVs per phase</span></div>
+          <p class="muted">No equity split is agreed before independent land and building valuations, known lease terms, and defined CAPEX, operating, improvement-ownership, exit and IP responsibilities.</p>
+        </div>
+        <div>
+          <h3>Next steps</h3>
+          <ol class="steps">
+            <li>Negotiate a Phase I lease option on the building and 3 dunums</li>
+            <li>Verify the licensing and accreditation pathway</li>
+            <li>Build the detailed 200-student operating budget</li>
+            <li>Research student demand and willingness to pay</li>
+            <li>Secure initial employer partners and sponsored seats</li>
+            <li>Commission the Phase II masterplan and BOQ</li>
+            <li>Negotiate a long-term option on the remaining site</li>
+            <li>Build a phased investor data room</li>
+            <li>Approach strategic, education, technology and development partners</li>
+            <li>Develop the school business case after the academy is validated</li>
+          </ol>
+        </div>
+      </div>
+    </section>
+
+    <!-- 18 Closing -->
+    <section class="slide closing" data-section="Closing">
+      <div class="inner">
+        <p class="statement" style="font-size:clamp(1.1rem,1.8vw,1.5rem);font-weight:400;font-family:var(--body);max-width:62ch;color:var(--ink-soft)">Gaza Smart Village is a phased education-to-employment infrastructure platform. It begins with a 200-student academy to prove the model, expands into a 1,500-student residential technology campus, and ultimately builds an international secondary school.</p>
+        <h2 style="margin-top:1.2em">Economic infrastructure for talent.</h2>
+        <div class="path big" style="margin-top:.4em">
+          <span class="stop">Education</span><span class="seg"></span>
+          <span class="stop">Infrastructure</span><span class="seg"></span>
+          <span class="stop">Market access</span><span class="seg"></span>
+          <span class="stop end">Employment</span>
+        </div>
+        <p class="tag" style="font-family:var(--display);font-size:clamp(1.3rem,2.4vw,2.1rem);font-weight:600;color:var(--route);margin-top:.6em">Learn. Build. Work.</p>
+        <p class="muted" style="margin-top:1.6em">Prepared for TAQAT · All financial figures are preliminary assumptions to be validated.</p>
+      </div>
+    </section>
+
+  </main>
+  <nav class="nav" aria-label="Slide navigation">
+    <button class="btn" id="prev" aria-label="Previous slide">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg><span class="t">Previous</span>
+    </button>
+    <div class="route" id="route"><div class="done" id="done"></div></div>
+    <span class="count" id="count" aria-live="polite"></span>
+    <button class="btn primary" id="next" aria-label="Next slide">
+      <span class="t">Next</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+    </button>
+  </nav>
+</div>
+
+<script>
+(function(){
+  const slides = Array.from(document.querySelectorAll('.slide'));
+  const route = document.getElementById('route');
+  const done = document.getElementById('done');
+  const count = document.getElementById('count');
+  const sectionName = document.getElementById('sectionName');
+  const prev = document.getElementById('prev');
+  const next = document.getElementById('next');
+  const total = slides.length;
+  let i = 0;
+
+  const dots = slides.map((s, k) => {
+    const d = document.createElement('button');
+    d.className = 'dot';
+    d.setAttribute('aria-label', 'Go to slide ' + (k+1) + ': ' + s.dataset.section);
+    d.title = s.dataset.section;
+    d.addEventListener('click', () => go(k));
+    route.appendChild(d);
+    return d;
+  });
+
+  function go(n){
+    if (n < 0 || n >= total || n === i && slides[i].classList.contains('active')) return;
+    const forward = n >= i;
+    slides.forEach((s, k) => {
+      s.classList.remove('active','back');
+      s.setAttribute('aria-hidden', k === n ? 'false' : 'true');
+      if (k < n) s.classList.add('back');
+    });
+    slides[n].classList.add('active');
+    slides[n].scrollTop = 0;
+    i = n;
+    dots.forEach((d, k) => {
+      d.classList.toggle('passed', k < i);
+      d.classList.toggle('current', k === i);
+      if (k === i) d.setAttribute('aria-current','step'); else d.removeAttribute('aria-current');
+    });
+    done.style.width = (total > 1 ? (i/(total-1))*100 : 0) + '%';
+    count.textContent = (i+1) + ' / ' + total;
+    sectionName.textContent = slides[i].dataset.section;
+    prev.disabled = i === 0;
+    next.disabled = i === total - 1;
+    try { history.replaceState(null, '', '#' + (i+1)); } catch(e){}
+  }
+
+  prev.addEventListener('click', () => go(i-1));
+  next.addEventListener('click', () => go(i+1));
+
+  document.addEventListener('keydown', e => {
+    if (e.target.closest('input,textarea')) return;
+    if (['ArrowRight','PageDown',' '].includes(e.key)) { e.preventDefault(); go(i+1); }
+    else if (['ArrowLeft','PageUp'].includes(e.key)) { e.preventDefault(); go(i-1); }
+    else if (e.key === 'Home') go(0);
+    else if (e.key === 'End') go(total-1);
+  });
+
+  // swipe on touch devices
+  let sx = null, sy = null;
+  const stage = document.getElementById('stage');
+  stage.addEventListener('touchstart', e => { sx = e.touches[0].clientX; sy = e.touches[0].clientY; }, {passive:true});
+  stage.addEventListener('touchend', e => {
+    if (sx === null) return;
+    const dx = e.changedTouches[0].clientX - sx, dy = e.changedTouches[0].clientY - sy;
+    if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy)*1.5) go(dx < 0 ? i+1 : i-1);
+    sx = sy = null;
+  });
+
+  const start = parseInt((location.hash || '').slice(1), 10);
+  i = -1;
+  go(start >= 1 && start <= total ? start-1 : 0);
+})();
+</script>
+</body>
+</html>
+
+</body></html>
